@@ -72,7 +72,7 @@ struct Option
 
 std::vector<Option> g_options;
 static bool g_quiet;
-static int g_copied;
+static uint64_t g_copied;
 
 static std::vector<std::string> SplitString(const std::string& str, char delim = ' ')
 {
@@ -283,7 +283,7 @@ static void RecurseCopyFiles(std::wstring_view source_root, const fs::path& targ
                     // Build the final path name:
                     // The source path without the drive letter and filename, appended to <target>.
                     // Example: C:\Users\admin\Documents\x.txt is transformed into
-                    //          [D:\Data\user_admin\C\][Users\user\Documents]
+                    //          [<target_root>\user_admin\C\][Users\user\Documents]
                     //          where <target_root> == D:\Data.
                     const auto target_path = target / file_path.relative_path().remove_filename();
                     fs::create_directories(target_path);
