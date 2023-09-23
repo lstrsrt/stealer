@@ -6,7 +6,6 @@ Multiple drives and users are supported. A basic log file is created for later i
 
 # options
 
-_________________________________________________________________________________________________________
 | Name  | Long name    | Description                                   | Default                        |
 |-------|--------------|-----------------------------------------------|--------------------------------|
 | -s    | --size       | Maximum file size in KB                       | 5000 (5 MB)                    |
