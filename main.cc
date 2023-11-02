@@ -70,9 +70,8 @@ struct Option
     std::variant<int, std::string, std::vector<std::string>> param;
 };
 
-std::vector<Option> g_options;
+static std::vector<Option> g_options;
 static bool g_quiet;
-static uint64_t g_copied;
 
 static std::vector<std::string> SplitString(const std::string& str, char delim = ' ')
 {
@@ -135,9 +134,9 @@ static Option& CmdAddArg(std::string_view short_name, std::string_view name)
     return g_options.emplace_back(Option::NewArg(short_name, name));
 }
 
-#define KB(x) (1000u * x)
-#define MB(x) (1000u * KB(x))
-#define GB(x) (1000u * MB(x))
+#define KB(x) (1000ull * x)
+#define MB(x) (1000ull * KB(x))
+#define GB(x) (1000ull * MB(x))
 
 struct FileFilter
 {
@@ -245,7 +244,7 @@ static fs::path GenerateTargetPath(const fs::path& target_root, char drive_lette
         return target_root / std::format("User_u{}\\{}", RandomInt(10000, 99999), drive_letter);
 }
 
-static void RecurseCopyFiles(std::wstring_view source_root, const fs::path& target_root, const FileFilter& filter)
+static void RecurseCopyFiles(std::wstring_view source_root, const fs::path& target_root, const FileFilter& filter, size_t& copy_count)
 {
     // Create a new directory for this user and drive. (Format: <target_root>\user_<USERNAME>\<DRIVE>\)
     const auto target = GenerateTargetPath(target_root, GetPathDriveLetter(source_root));
@@ -283,12 +282,12 @@ static void RecurseCopyFiles(std::wstring_view source_root, const fs::path& targ
                     // Build the final path name:
                     // The source path without the drive letter and filename, appended to <target>.
                     // Example: C:\Users\admin\Documents\x.txt is transformed into
-                    //          [<target_root>\user_admin\C\][Users\user\Documents]
-                    //          where <target_root> == D:\Data.
+                    //          D:\Data\user_admin\C\Users\user\Documents
+                    //          where D:\Data == <target_root>.
                     const auto target_path = target / file_path.relative_path().remove_filename();
                     fs::create_directories(target_path);
                     fs::copy(file_path, target_path, fs::copy_options::update_existing);
-                    g_copied++;
+                    copy_count++;
                 }
             }
         }
@@ -333,12 +332,13 @@ int main(int argc, char* argv[])
             exit(0);
     }
 
+    size_t copy_count = 0;
     for (const auto& drive : CollectDrives(true))
-        RecurseCopyFiles(drive, target, filter);
+        RecurseCopyFiles(drive, target, filter, copy_count);
 
     if (!g_quiet)
     {
-        std::cout << "Done. Copied " << g_copied << " files.\nPress a key to exit.\n";
+        std::cout << "Done. Copied " << copy_count << " files.\nPress a key to exit.\n";
         std::cin.get();
     }
 }
